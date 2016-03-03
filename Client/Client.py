@@ -30,6 +30,10 @@ class Client:
         loginRequest = {'request': 'login', 'content': username}
         jsonLogin = json.dumps(loginRequest)
         self.send_payload(jsonLogin)
+        json_response = self.connection.recv(1024)
+        if json_response:
+            json_dict = json.loads(json_response)
+            print(json_dict["content"])
         
     def disconnect(self):
         # TODO: Handle disconnection

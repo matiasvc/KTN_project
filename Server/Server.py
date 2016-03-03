@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import SocketServer
 import json
+from time import time
 """
 Variables and functions that must be used by all the ClientHandler objects
 must be written here (e.g. a dictionary for connected clients)
@@ -29,6 +30,11 @@ class ClientHandler(SocketServer.BaseRequestHandler):
                 recivedDict = json.loads(data) 
                 if recivedDict['request'] == 'login':
                     print(recivedDict["content"])
+                    # Response
+                    response = {"timestamp":time(), "sender": "Server", "response": "info", "content": "Login successfull!"}
+                    response_string = json.dumps(response)
+                    self.connection.sendall(response_string)
+
             # TODO: Add handling of received payload from client
 
 
