@@ -35,7 +35,7 @@ class ClientHandler(SocketServer.BaseRequestHandler):
                     response_string = json.dumps(response)
                     self.connection.sendall(response_string)
 
-            # TODO: Add handling of received payload from client
+
 
 
 class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
