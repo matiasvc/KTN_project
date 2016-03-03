@@ -26,14 +26,19 @@ class Client:
     def run(self):
         # Initiate the connection to the server
         self.connection.connect((self.host, self.server_port))
-        username = raw_input("Enter username: ")
-        loginRequest = {'request': 'login', 'content': username}
-        jsonLogin = json.dumps(loginRequest)
-        self.send_payload(jsonLogin)
-        json_response = self.connection.recv(1024)
-        if json_response:
-            json_dict = json.loads(json_response)
-            print(json_dict["content"])
+        input = raw_input(">>")
+        parts = input.split(" ", 1)
+        command = parts[0]
+        argument = parts[1]
+
+        if command == "login":
+            loginRequest = {'request': 'login', 'content': argument}
+            jsonLogin = json.dumps(loginRequest)
+            self.send_payload(jsonLogin)
+            json_response = self.connection.recv(1024)
+            if json_response:
+                json_dict = json.loads(json_response)
+                print(json_dict["content"])
         
     def disconnect(self):
         # TODO: Handle disconnection
@@ -47,6 +52,9 @@ class Client:
         # TODO: Handle sending of a payload
         self.connection.sendall(data)
         pass
+
+    def login(self):
+        print("Login")
         
     # More methods may be needed!
 
