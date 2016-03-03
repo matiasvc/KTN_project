@@ -20,6 +20,9 @@ class Client:
         self.connection = socket(AF_INET, SOCK_STREAM)
         self.host = host
         self.server_port = server_port
+        self.message_reciever = MessageReceiver(self, self.connection)
+        self.message_parser = MessageParser()
+
         # TODO: Finish init process with necessary code
         self.run()
 
@@ -35,10 +38,6 @@ class Client:
             loginRequest = {'request': 'login', 'content': argument}
             jsonLogin = json.dumps(loginRequest)
             self.send_payload(jsonLogin)
-            json_response = self.connection.recv(1024)
-            if json_response:
-                json_dict = json.loads(json_response)
-                print(json_dict["content"])
         
     def disconnect(self):
         # TODO: Handle disconnection
@@ -46,7 +45,7 @@ class Client:
 
     def receive_message(self, message):
         # TODO: Handle incoming message
-        pass
+        print(self.message_parser.parse(message))
 
     def send_payload(self, data):
         # TODO: Handle sending of a payload
