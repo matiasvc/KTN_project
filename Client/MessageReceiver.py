@@ -15,15 +15,14 @@ class MessageReceiver(Thread):
         """
         This method is executed when creating a new MessageReceiver object
         """
-
+        self.client = client
+        self.connection = connection
+        super(MessageReceiver, self).__init__()
         # Flag to run thread as a deamon
         self.daemon = True
 
-        self.client = client
-        self.connection = connection
-
-        self.run()
-
     def run(self):
-        json_response = self.connection.recv(1024)
-        self.client.receive_message(json_response)
+        while True:
+            json_response = self.connection.recv(1024)
+            if json_response:
+                self.client.receive_message(json_response)

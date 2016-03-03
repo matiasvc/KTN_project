@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from socket import *
 import json
+
 from MessageReceiver import MessageReceiver
 from MessageParser import MessageParser
 
@@ -20,25 +21,28 @@ class Client:
         self.connection = socket(AF_INET, SOCK_STREAM)
         self.host = host
         self.server_port = server_port
+
         self.message_reciever = MessageReceiver(self, self.connection)
         self.message_parser = MessageParser()
 
-        # TODO: Finish init process with necessary code
         self.run()
 
     def run(self):
         # Initiate the connection to the server
         self.connection.connect((self.host, self.server_port))
-        input = raw_input(">>")
-        parts = input.split(" ", 1)
-        command = parts[0]
-        argument = parts[1]
+        self.message_reciever.start()
 
-        if command == "login":
-            loginRequest = {'request': 'login', 'content': argument}
-            jsonLogin = json.dumps(loginRequest)
-            self.send_payload(jsonLogin)
-        
+        while True:
+            input = raw_input(">>")
+            parts = input.split(" ", 1)
+            command = parts[0]
+            argument = parts[1]
+
+            if command == "login":
+                loginRequest = {'request': 'login', 'content': argument}
+                jsonLogin = json.dumps(loginRequest)
+                self.send_payload(jsonLogin)
+
     def disconnect(self):
         # TODO: Handle disconnection
         pass
@@ -66,3 +70,4 @@ if __name__ == '__main__':
     No alterations are necessary
     """
     client = Client('localhost', 9998)
+
