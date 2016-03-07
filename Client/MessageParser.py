@@ -32,7 +32,7 @@ class MessageParser():
         return payload['content']
 
     def parse_message(self, payload):
-        return payload['content']
+        return payload['user'] + ":" + payload['content']
 
     def parse_history(self, payload):
         return json.loads(payload['content'].decode('utf-8'))
