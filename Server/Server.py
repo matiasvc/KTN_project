@@ -8,6 +8,9 @@ Variables and functions that must be used by all the ClientHandler objects
 must be written here (e.g. a dictionary for connected clients)
 """
 
+clients = {}
+
+
 class ClientHandler(socketserver.BaseRequestHandler):
     """
     This is the ClientHandler class. Everytime a new client connects to the
@@ -24,20 +27,48 @@ class ClientHandler(socketserver.BaseRequestHandler):
         self.port = self.client_address[1]
         self.connection = self.request
 
+        self.handlers = {
+            'login' : self.handleLogin,
+            'msg' : self.handleMessage
+        }
+
         # Loop that listens for messages from the client
         while True:
             data = self.connection.recv(4096)
             if data:
                 recivedDict = json.loads(data.decode('utf-8'))
-                if recivedDict['request'] == 'login':
-                    print(recivedDict["content"])
-                    # Response
-                    response = {"timestamp":time(), "sender": "Server", "response": "info", "content": "Login successfull!"}
-                    response_string = json.dumps(response)
-                    self.connection.sendall(bytes(response_string, 'utf-8'))
+                messageType = recivedDict['request']
+                content = recivedDict['content']
+
+                print("Server received: " + str(recivedDict))
+
+                response = self.handlers[messageType](content)
+
+                if response:
+                    self.send(response)
 
 
+    def handleLogin(self, content):
+        # TODO: Check if username is taken
+        response = {"timestamp":time(), "sender": "Server", "response": "info", "content": "Login successfull!"}
+        username = content
 
+        clients[username] = self
+        return response
+
+    def handleMessage(self, content):
+        for username, client in clients.items():
+            if client != self:
+                client.receiveMessage(username, content)
+
+    def send(self, content):
+        contentString = json.dumps(content)
+        print("Server sent: " + contentString)
+        self.connection.sendall(bytes(contentString, 'utf-8'))
+
+    def receiveMessage(self, user, message):
+        content = {"timestamp":time(), "sender": user, "response": "msg", "content": message}
+        self.send(content)
 
 class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     """
