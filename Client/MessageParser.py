@@ -27,7 +27,7 @@ class MessageParser():
         return payload['content']
     
     def parse_info(self, payload):
-        if payload['content'] == 'Logout succesful':
+        if payload['content'] == 'Logout successful':
             self.client.disconnect(self.client)
         return payload['content']
 
