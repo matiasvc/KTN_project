@@ -63,3 +63,4 @@ target/
 
 venv/
 .idea/
+.DS_Store

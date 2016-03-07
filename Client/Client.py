@@ -23,7 +23,7 @@ class Client:
         self.server_port = server_port
 
         self.message_reciever = MessageReceiver(self, self.connection)
-        self.message_parser = MessageParser()
+        self.message_parser = MessageParser(self)
 
         self.received_answer = True
 
