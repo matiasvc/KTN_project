@@ -28,13 +28,13 @@ class ClientHandler(socketserver.BaseRequestHandler):
         while True:
             data = self.connection.recv(4096)
             if data:
-                recivedDict = json.loads(data) 
+                recivedDict = json.loads(data.decode('utf-8'))
                 if recivedDict['request'] == 'login':
                     print(recivedDict["content"])
                     # Response
                     response = {"timestamp":time(), "sender": "Server", "response": "info", "content": "Login successfull!"}
                     response_string = json.dumps(response)
-                    self.connection.sendall(response_string)
+                    self.connection.sendall(bytes(response_string, 'utf-8'))
 
 
 

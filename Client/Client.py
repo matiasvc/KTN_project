@@ -53,7 +53,7 @@ class Client:
 
     def send_payload(self, data):
         # TODO: Handle sending of a payload
-        self.connection.sendall(data)
+        self.connection.sendall(bytes(data, 'utf-8'))
         pass
 
     def login(self):
