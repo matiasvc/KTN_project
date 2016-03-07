@@ -49,11 +49,15 @@ class ClientHandler(socketserver.BaseRequestHandler):
 
 
     def handleLogin(self, content):
-        # TODO: Check if username is taken
-        response = {"timestamp":time(), "sender": "Server", "response": "info", "content": "Login successfull!"}
         username = content
-
-        clients[username] = self
+        if username in clients.keys():
+            response = {"timestamp":time(), "sender": "Server", "response": "error", "content": "Username taken"}
+        else:
+            response = {"timestamp":time(), "sender": "Server", "response": "info", "content": "Login successfull!"}
+            for client in clients.values():
+                infoMessage = {"timestamp":time(), "sender": "Server", "response": "info", "content": "User joined: " + username}
+                client.send(infoMessage)
+            clients[username] = self
         return response
 
     def handleMessage(self, content):
