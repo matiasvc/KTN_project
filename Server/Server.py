@@ -67,7 +67,7 @@ class ClientHandler(socketserver.BaseRequestHandler):
         self.connection.sendall(bytes(contentString, 'utf-8'))
 
     def receiveMessage(self, user, message):
-        content = {"timestamp":time(), "sender": user, "response": "msg", "content": message}
+        content = {"timestamp":time(), "sender": user, "response": "message", "content": message}
         self.send(content)
 
 class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
