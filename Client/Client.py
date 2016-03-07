@@ -33,8 +33,8 @@ class Client:
         self.message_reciever.start()
 
         while True:
-            input = raw_input(">>")
-            parts = input.split(" ", 1)
+            inputString = input(">>")
+            parts = inputString.split(" ", 1)
             command = parts[0]
             argument = parts[1]
 

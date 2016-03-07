@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-import SocketServer
+
+import socketserver
 import json
 from time import time
 """
@@ -7,7 +8,7 @@ Variables and functions that must be used by all the ClientHandler objects
 must be written here (e.g. a dictionary for connected clients)
 """
 
-class ClientHandler(SocketServer.BaseRequestHandler):
+class ClientHandler(socketserver.BaseRequestHandler):
     """
     This is the ClientHandler class. Everytime a new client connects to the
     server, a new ClientHandler object will be created. This class represents
@@ -38,7 +39,7 @@ class ClientHandler(SocketServer.BaseRequestHandler):
 
 
 
-class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
+class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     """
     This class is present so that each client connected will be ran as a own
     thread. In that way, all clients will be served by the server.
@@ -55,7 +56,7 @@ if __name__ == "__main__":
     No alterations are necessary
     """
     HOST, PORT = 'localhost', 9998
-    print 'Server running...'
+    print('Server running...')
 
     # Set up and initiate the TCP server
     server = ThreadedTCPServer((HOST, PORT), ClientHandler)
