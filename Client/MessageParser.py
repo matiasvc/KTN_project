@@ -17,7 +17,7 @@ class MessageParser():
     def parse(self, payload):
         # Decode the JSON object
         payload = json.loads(payload.decode('utf-8'))
-
+        print(payload)
         if payload['response'] in self.possible_responses:
             return self.possible_responses[payload['response']](payload)
         else:
@@ -32,7 +32,7 @@ class MessageParser():
         return payload['content']
 
     def parse_message(self, payload):
-        return payload['message']
+        return payload['content']
 
     def parse_history(self, payload):
         return json.loads(payload['content'].decode('utf-8'))
