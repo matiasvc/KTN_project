@@ -61,9 +61,12 @@ class Client:
                 elif command == "help":
                     request = "help"
 
-            requestDict = {'request': request, 'content': content}
-            jsonData = json.dumps(requestDict)
-            self.send_payload(jsonData)
+            if not request:
+                print("Invalid input")
+            else:
+                requestDict = {'request': request, 'content': content}
+                jsonData = json.dumps(requestDict)
+                self.send_payload(jsonData)
 
 
     def disconnect(self):
