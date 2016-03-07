@@ -58,8 +58,7 @@ class ClientHandler(socketserver.BaseRequestHandler):
 
     def handleMessage(self, content):
         for username, client in clients.items():
-            if client != self:
-                client.receiveMessage(username, content)
+            client.receiveMessage(username, content)
 
     def send(self, content):
         contentString = json.dumps(content)
