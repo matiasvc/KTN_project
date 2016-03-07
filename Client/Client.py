@@ -25,41 +25,60 @@ class Client:
         self.message_reciever = MessageReceiver(self, self.connection)
         self.message_parser = MessageParser()
 
+        self.received_answer = True
+
         self.run()
 
     def run(self):
         # Initiate the connection to the server
         self.connection.connect((self.host, self.server_port))
         self.message_reciever.start()
-
         while True:
+            self.get_input()
+
+
+    def get_input(self):
+        if self.received_answer:
             inputString = input(">>")
             parts = inputString.split(" ", 1)
-            command = parts[0]
-            argument = parts[1]
+            request = None
+            content = None
+            if len(parts) == 2:
+                command = parts[0]
+                argument = parts[1]
+                if command == "login":
+                    request = "login"
+                    content = argument
+                elif command == "msg":
+                    request = "msg"
+                    content = argument
+            else:
+                command = inputString
+                if command == "logout":
+                    request = "logout"
+                elif command == "names":
+                    request = "names"
+                elif command == "help":
+                    request = "help"
 
-            if command == "login":
-                loginRequest = {'request': 'login', 'content': argument}
-                jsonLogin = json.dumps(loginRequest)
-                self.send_payload(jsonLogin)
+            requestDict = {'request': request, 'content': content}
+            jsonData = json.dumps(requestDict)
+            self.send_payload(jsonData)
+
 
     def disconnect(self):
         # TODO: Handle disconnection
+        self.connection.close()
         pass
 
     def receive_message(self, message):
         # TODO: Handle incoming message
         print(self.message_parser.parse(message))
+        self.received_answer = True
 
     def send_payload(self, data):
-        # TODO: Handle sending of a payload
+        self.received_answer = False
         self.connection.sendall(bytes(data, 'utf-8'))
-        pass
-
-    def login(self):
-        print("Login")
-        
-    # More methods may be needed!
 
 
 if __name__ == '__main__':
