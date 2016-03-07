@@ -29,7 +29,7 @@ class MessageParser():
     def parse_info(self, payload):
         if payload['content'] == 'Logout succesful':
             self.client.disconnect(self.client)
-         return payload['content']
+        return payload['content']
 
     def parse_message(self, payload):
         return payload['message']
