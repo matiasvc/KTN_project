@@ -17,24 +17,28 @@ class MessageParser():
     def parse(self, payload):
         # Decode the JSON object
         payload = json.loads(payload.decode('utf-8'))
-        print(payload)
+        #print(payload)
         if payload['response'] in self.possible_responses:
             return self.possible_responses[payload['response']](payload)
         else:
             raise ValueError('Response not valid')
 
     def parse_error(self, payload):
-        return payload['content']
+        return "[Error] " + payload['content']
     
     def parse_info(self, payload):
         if payload['content'] == 'Logout successful':
             self.client.disconnect(self.client)
-        return payload['content']
+        return "[Info] " + payload['content']
 
     def parse_message(self, payload):
-        return payload['sender'] + ":" + payload['content']
+        return payload['sender'] + ": " + payload['content']
 
     def parse_history(self, payload):
-        return json.loads(payload['content'].decode('utf-8'))
+        #for message in payload['content']:
+            #print("hist_message: ", message)
+            #self.parse(message)
+        #return "History" #payload['content']
+        pass
     
     # Include more methods for handling the different responses... 

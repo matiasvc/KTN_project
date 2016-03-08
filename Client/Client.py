@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from socket import *
-import json
+import json, sys
 
 from MessageReceiver import MessageReceiver
 from MessageParser import MessageParser
@@ -64,15 +64,20 @@ class Client:
             if not request:
                 print("Invalid input")
             else:
-                requestDict = {'request': request, 'content': content}
+                if content:
+                    requestDict = {'request': request, 'content': content}
+                else:
+                    requestDict = {'request': request}
                 jsonData = json.dumps(requestDict)
                 self.send_payload(jsonData)
+                if request == "logout":
+                    self.disconnect()
 
 
     def disconnect(self):
         # TODO: Handle disconnection
-        self.connection.close()
-        pass
+        #self.connection.close()
+        sys.exit()
 
     def receive_message(self, message):
         # TODO: Handle incoming message

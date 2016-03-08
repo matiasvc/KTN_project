@@ -15,6 +15,7 @@ class MessageReceiver(Thread):
         """
         This method is executed when creating a new MessageReceiver object
         """
+        Thread.__init__(self)
         self.client = client
         self.connection = connection
         super(MessageReceiver, self).__init__()
@@ -23,6 +24,6 @@ class MessageReceiver(Thread):
 
     def run(self):
         while True:
-            json_response = self.connection.recv(1024)
+            json_response = self.connection.recv(4096)
             if json_response:
                 self.client.receive_message(json_response)

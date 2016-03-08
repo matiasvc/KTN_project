@@ -1,15 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import socketserver
-import json
+import json, re
 from time import time
 """
 Variables and functions that must be used by all the ClientHandler objects
 must be written here (e.g. a dictionary for connected clients)
 """
-
-clients = {}
-
 
 class ClientHandler(socketserver.BaseRequestHandler):
     """
@@ -26,52 +23,108 @@ class ClientHandler(socketserver.BaseRequestHandler):
         self.ip = self.client_address[0]
         self.port = self.client_address[1]
         self.connection = self.request
+        self.user = None
+        server.clients.append(self)
 
         self.handlers = {
-            'login' : self.handleLogin,
-            'msg' : self.handleMessage
+            'login' : self.login,
+            'logout' : self.logout,
+            'msg' : self.message,
+            'names' : self.names,
+            'help' : self.help
         }
 
         # Loop that listens for messages from the client
         while True:
-            data = self.connection.recv(4096)
+            try:
+                data = self.connection.recv(4096)
+            except Exception as e:
+                #self.logout()
+                break
+
             if data:
                 recivedDict = json.loads(data.decode('utf-8'))
                 messageType = recivedDict['request']
-                content = recivedDict['content']
+                if 'content' in recivedDict:
+                    content = recivedDict['content']
 
-                print("Server received: " + str(recivedDict))
+                    print("Server received: " + str(recivedDict))
 
-                response = self.handlers[messageType](content)
+                    response = self.handlers[messageType](content)
+                else:
+                    print("Server received: " + str(recivedDict))
+
+                    response = self.handlers[messageType]()
 
                 if response:
                     self.send(response)
 
+    def history(self):
+        msg = {"timestamp":time(), "sender":"[Server]", "response":"history", "content":[]}
+        for message in server.messages:
+            msg['content'].append(message)
+        print("History: ", msg)
+        self.send(msg)
 
-    def handleLogin(self, content):
-        username = content
-        if username in clients.keys():
-            response = {"timestamp":time(), "sender": "Server", "response": "error", "content": "Username taken"}
+    def login(self, content):
+        if re.match("[A-Za-z0-9_-]+$", content):
+            self.user = content
+
+            #self.history()
+
+            if self.user in server.clients:
+                response = {"timestamp":time(), "sender": "[Server]", "response": "error", "content": "Username taken"}
+            else:
+                response = {"timestamp":time(), "sender": "[Server]", "response": "info", "content": "Login successfull!"}
+                for client in server.clients:
+                    infoMessage = {"timestamp":time(), "sender": "[Server]", "response": "info", "content": "User joined: " + self.user}
+                    client.send(infoMessage)
+            server.messages.append(infoMessage)
         else:
-            response = {"timestamp":time(), "sender": "Server", "response": "info", "content": "Login successfull!"}
-            for client in clients.values():
-                infoMessage = {"timestamp":time(), "sender": "Server", "response": "info", "content": "User joined: " + username}
-                client.send(infoMessage)
-            clients[username] = self
+            response = {"timestamp":time(), "sender": "[Server]", "response": "info", "content": "Invalid username"}
         return response
 
-    def handleMessage(self, content):
-        for username, client in clients.items():
-            client.receiveMessage(username, content)
+    def logout(self):
+        #print("Clients: ", server.clients)
+        #print("Self: ", self)
+        server.clients.remove(self)
+        self.connection.close()
+        if (self.user != None):
+            print(self.user, 'logged out')
+            msg = {'timestamp':time(), 'sender':'[Server]', 'response':'info', 'content':self.user+' disconnected'}
+            for client in server.clients:
+                if (client.user != None):
+                    client.send(msg)
+            server.messages.append(msg)
+
+    def message(self, content):
+        for client in server.clients:
+            client.receiveMessage(client.user, content)
+
+    def names(self):
+        names = ""
+        for username in server.clients:
+            names += username.user+', '
+        content = {'timestamp':time(), 'sender':'[Server]', 'response':'info', 'content':'Connected users: '+names}
+        self.send(content)
+
+    def help(self):
+        msg = {'timestamp':time(), 'sender':'[Help]', 'response':'info', 'content':'Available commands: login <username>, logout, msg <message>, names, help'}
+        self.send(msg)
 
     def send(self, content):
         contentString = json.dumps(content)
         print("Server sent: " + contentString)
-        self.connection.sendall(bytes(contentString, 'utf-8'))
+        self.connection.send(bytes(contentString, 'utf-8'))
 
     def receiveMessage(self, user, message):
         content = {"timestamp":time(), "sender": user, "response": "message", "content": message}
         self.send(content)
+        server.messages.append(content)
+
+    def error(self, content):
+        msg_holder = {'timestamp':time(), 'sender':'[Error]', 'response':'error', 'content':content}
+        self.send(msg_holder)
 
 class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     """
@@ -81,6 +134,8 @@ class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     No alterations are necessary
     """
     allow_reuse_address = True
+    clients = []
+    messages = []
 
 if __name__ == "__main__":
     """
