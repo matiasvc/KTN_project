@@ -9,6 +9,7 @@ must be written here (e.g. a dictionary for connected clients)
 """
 
 clients = {}
+messageHistory = []
 
 
 class ClientHandler(socketserver.BaseRequestHandler):
@@ -26,52 +27,58 @@ class ClientHandler(socketserver.BaseRequestHandler):
         self.ip = self.client_address[0]
         self.port = self.client_address[1]
         self.connection = self.request
+        self.username = None
 
         self.handlers = {
-            'login' : self.handleLogin,
-            'msg' : self.handleMessage
+            'login': self.handle_login,
+            'msg': self.handle_message
         }
 
         # Loop that listens for messages from the client
         while True:
             data = self.connection.recv(4096)
             if data:
-                recivedDict = json.loads(data.decode('utf-8'))
-                messageType = recivedDict['request']
-                content = recivedDict['content']
+                received_dict = json.loads(data.decode('utf-8'))
+                messageType = received_dict['request']
+                print("Server received: " + str(received_dict))
 
-                print("Server received: " + str(recivedDict))
+                self.handlers[messageType](received_dict)
 
-                response = self.handlers[messageType](content)
-
-                if response:
-                    self.send(response)
-
-
-    def handleLogin(self, content):
-        username = content
+    def handle_login(self, received_dict):
+        username = received_dict["content"]
         if username in clients.keys():
-            response = {"timestamp":time(), "sender": "Server", "response": "error", "content": "Username taken"}
+            response_dict = {"timestamp": time(), "sender": "Server", "response": "error", "content": "Username taken"}
         else:
-            response = {"timestamp":time(), "sender": "Server", "response": "info", "content": "Login successfull!"}
-            for client in clients.values():
-                infoMessage = {"timestamp":time(), "sender": "Server", "response": "info", "content": "User joined: " + username}
-                client.send(infoMessage)
+            response_dict = {"timestamp": time(), "sender": "Server", "response": "info", "content": "Login successful!"}
+            self.username = username
+            self.send_to_client(response_dict)
+
+            # Return history to client
+            for history_message_dict in messageHistory:
+                self.send_to_client(history_message_dict)
+
+            info_message_dict = {"timestamp": time(), "sender": "Server", "response": "info", "content": "User joined: " + username}
+            self.broadcast(info_message_dict)
             clients[username] = self
-        return response
 
-    def handleMessage(self, content):
-        for username, client in clients.items():
-            client.receiveMessage(username, content)
+    def handle_message(self, received_dict):
+        for client in clients.values():
+            client.receive_message(self.username, received_dict["content"])
 
-    def send(self, content):
-        contentString = json.dumps(content)
-        print("Server sent: " + contentString)
-        self.connection.sendall(bytes(contentString, 'utf-8'))
+    def send_to_client(self, content_dict):
+        content_string = json.dumps(content_dict)
+        print("Server sent: " + content_string)
+        self.connection.sendall(bytes(content_string, 'utf-8'))
 
-    def receiveMessage(self, user, message):
-        content = {"timestamp":time(), "sender": user, "response": "message", "content": message}
-        self.send(content)
+    def broadcast(self, content_dict):
+        messageHistory.append(content_dict)
+        for client in clients.values():
+            client.send_to_client(content_dict)
+
+    def receive_message(self, sender, message):
+        content = {"timestamp": time(), "sender": sender, "response": "message", "content": message}
+        self.send_to_client(content)
+
 
 class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     """
