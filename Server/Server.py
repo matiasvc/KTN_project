@@ -50,7 +50,7 @@ class ClientHandler(socketserver.BaseRequestHandler):
                         self.handlers[messageType](received_dict)
                     except KeyError:
                         self.handle_unknow_command(received_dict)
-            except ConnectionResetError:
+            except (ConnectionResetError, TimeoutError):
                 if self.username:
                     print("Connection reset: " + self.username)
                     del clients[self.username]
