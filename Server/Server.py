@@ -31,7 +31,10 @@ class ClientHandler(socketserver.BaseRequestHandler):
 
         self.handlers = {
             'login': self.handle_login,
-            'msg': self.handle_message
+            'msg': self.handle_message,
+            'logout': self.handle_logout,
+            'help' : self.handle_help,
+            'history' : self.handle_history
         }
 
         # Loop that listens for messages from the client
@@ -41,43 +44,66 @@ class ClientHandler(socketserver.BaseRequestHandler):
                 received_dict = json.loads(data.decode('utf-8'))
                 messageType = received_dict['request']
                 print("Server received: " + str(received_dict))
-
-                self.handlers[messageType](received_dict)
+                try:
+                    self.handlers[messageType](received_dict)
+                except KeyError:
+                    self.handle_unknow_command(received_dict)
 
     def handle_login(self, received_dict):
         username = received_dict["content"]
         if username in clients.keys():
             response_dict = {"timestamp": time(), "sender": "Server", "response": "error", "content": "Username taken"}
+            self.send_to_client(response_dict)
         else:
             response_dict = {"timestamp": time(), "sender": "Server", "response": "info", "content": "Login successful!"}
             self.username = username
             self.send_to_client(response_dict)
 
             # Return history to client
-            for history_message_dict in messageHistory:
-                self.send_to_client(history_message_dict)
+            self.send_history_to_client()
 
             info_message_dict = {"timestamp": time(), "sender": "Server", "response": "info", "content": "User joined: " + username}
             self.broadcast(info_message_dict)
             clients[username] = self
 
+    def handle_logout(self, received_dict):
+        del clients[self.username]
+        response_dict = {"timestamp": time(), "sender": "Server", "response": "info", "content": "Logout successful"}
+        self.send_to_client(response_dict)
+        info_dict = {"timestamp": time(), "sender": "Server", "response": "info", "content": "User left: " + self.username}
+        self.broadcast(info_dict)
+
     def handle_message(self, received_dict):
+        message_dict = {"timestamp": time(), "sender": self.username, "response": "message", "content": received_dict["content"]}
+        messageHistory.append(message_dict)
         for client in clients.values():
-            client.receive_message(self.username, received_dict["content"])
+            client.send_to_client(message_dict)
+
+    def handle_history(self, received_dict):
+        self.send_to_client()
+
+    def handle_help(self, received_dict):
+        response_dict = {"timestamp": time(), "sender": "Server", "response": "info", "content": "login\nmsg\nlogout\nhelp\nhistory"}
+        self.send_to_client(response_dict)
+
+    def handle_unknow_command(self, received_dict):
+        response_dict = {"timestamp": time(), "sender": "Server", "response": "error", "content": "Unknown command: " + received_dict['request']}
+        self.send_to_client(response_dict)
 
     def send_to_client(self, content_dict):
         content_string = json.dumps(content_dict)
         print("Server sent: " + content_string)
         self.connection.sendall(bytes(content_string, 'utf-8'))
 
+    def send_history_to_client(self):
+        history_string = json.dumps(messageHistory)
+        history_dict = {"timestamp": time(), "sender": "Server", "response": "history", "content": history_string}
+        self.send_to_client(history_dict)
+
     def broadcast(self, content_dict):
-        messageHistory.append(content_dict)
         for client in clients.values():
             client.send_to_client(content_dict)
 
-    def receive_message(self, sender, message):
-        content = {"timestamp": time(), "sender": sender, "response": "message", "content": message}
-        self.send_to_client(content)
 
 
 class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
@@ -96,7 +122,7 @@ if __name__ == "__main__":
 
     No alterations are necessary
     """
-    HOST, PORT = 'localhost', 9998
+    HOST, PORT = '0.0.0.0', 9998
     print('Server running...')
 
     # Set up and initiate the TCP server
