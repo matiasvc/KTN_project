@@ -92,5 +92,5 @@ if __name__ == '__main__':
     No alterations are necessary
     """
     print('Type "login <username>" to log in ')
-    client = Client('localhost', 9998)
+    client = Client('78.91.21.249', 9998)
 
