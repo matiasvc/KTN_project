@@ -35,7 +35,7 @@ class MessageParser():
         return payload['sender'] + ":" + payload['content']
 
     def parse_history(self, payload):
-        json_list = json.loads(payload['content'].decode('utf-8'))
+        json_list = json.loads(payload['content'].decode("utf-8"))
         mess = ""
         for item in json_list:
             mess += self.parse_message(item) + "\n"
