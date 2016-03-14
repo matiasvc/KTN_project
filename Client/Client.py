@@ -26,6 +26,7 @@ class Client:
         self.message_parser = MessageParser(self)
 
         self.received_answer = True
+        self.is_logged_in = False
 
         self.run()
 
@@ -47,8 +48,12 @@ class Client:
                 command = parts[0]
                 argument = parts[1]
                 if command == "login":
-                    request = "login"
-                    content = argument
+                    if not self.is_logged_in:
+                        request = "login"
+                        content = argument
+                    else:
+                        print("You are already logged in!")
+                        return
                 elif command == "msg":
                     request = "msg"
                     content = argument

@@ -28,6 +28,8 @@ class MessageParser():
         return payload['content']
     
     def parse_info(self, payload):
+        if payload["content"] == "Logout successful":
+            self.client.is_logged_in = True
         return payload['content']
 
     def parse_message(self, payload):
