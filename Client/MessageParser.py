@@ -28,13 +28,17 @@ class MessageParser():
     
     def parse_info(self, payload):
         if payload['content'] == 'Logout successful':
-            self.client.disconnect(self.client)
+            self.client.disconnect()
         return payload['content']
 
     def parse_message(self, payload):
         return payload['sender'] + ":" + payload['content']
 
     def parse_history(self, payload):
-        return json.loads(payload['content'].decode('utf-8'))
+        json_list = json.loads(payload['content'].decode('utf-8'))
+        mess = ""
+        for item in json_list:
+            mess += self.parse_message(item) + "\n"
+        return mess
     
     # Include more methods for handling the different responses... 
