@@ -10,7 +10,8 @@ class MessageParser():
             'error': self.parse_error,
             'info': self.parse_info,
             'message': self.parse_message,
-            'history': self.parse_history
+            'history': self.parse_history,
+            'names': self.parse_names
 
         }
 
@@ -31,6 +32,13 @@ class MessageParser():
 
     def parse_message(self, payload):
         return payload['sender'] + ": " + payload['content']
+
+    def parse_names(self, payload):
+        names = payload['content']
+        mess = "Users in lobby:" + "\n"
+        for name in names:
+            mess += name + "\n"
+        return mess
 
     def parse_history(self, payload):
         json_list = json.loads(payload['content'])
