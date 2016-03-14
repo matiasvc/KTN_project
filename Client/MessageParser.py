@@ -35,12 +35,10 @@ class MessageParser():
         return payload['sender'] + ": " + payload['content']
 
     def parse_history(self, payload):
-
         json_list = json.loads(payload['content'])
         mess = ""
         for item in json_list:
             mess += self.parse_message(item) + "\n"
         return mess
-
     
     # Include more methods for handling the different responses... 
