@@ -34,7 +34,6 @@ class ClientHandler(socketserver.BaseRequestHandler):
             'msg': self.handle_message,
             'logout': self.handle_logout,
             'help' : self.handle_help,
-            'history' : self.handle_history,
             'names' : self.handle_names
         }
 
@@ -61,12 +60,14 @@ class ClientHandler(socketserver.BaseRequestHandler):
             response_dict = {"timestamp": time(), "sender": "Server", "response": "error", "content": "Username taken"}
             self.send_to_client(response_dict)
         else:
-            response_dict = {"timestamp": time(), "sender": "Server", "response": "info", "content": "Login successful!"}
+            response_dict = {"timestamp": time(), "sender": "Server", "response": "info", "content": "Login successful"}
             self.username = username
             self.send_to_client(response_dict)
 
             # Return history to client
-            self.send_history_to_client()
+            history_string = json.dumps(messageHistory)
+            history_dict = {"timestamp": time(), "sender": "Server", "response": "history", "content": history_string}
+            self.send_to_client(history_dict)
 
             info_message_dict = {"timestamp": time(), "sender": "Server", "response": "info", "content": "User joined: " + username}
             self.broadcast(info_message_dict)
@@ -93,8 +94,7 @@ class ClientHandler(socketserver.BaseRequestHandler):
                       "login [username] - Log in to server\n" \
                       "msg [message - Send message]\n" \
                       "logout - Log out from server\n" \
-                      "help - Print this page\n" \
-                      "history - Print a history of all messages"
+                      "help - Print this page"
         response_dict = {"timestamp": time(), "sender": "Server", "response": "info", "content": help_string}
         self.send_to_client(response_dict)
 
@@ -111,11 +111,6 @@ class ClientHandler(socketserver.BaseRequestHandler):
         content_string = json.dumps(content_dict)
         print("Server sent: " + content_string)
         self.connection.sendall(bytes(content_string, 'utf-8'))
-
-    def send_history_to_client(self):
-        history_string = json.dumps(messageHistory)
-        history_dict = {"timestamp": time(), "sender": "Server", "response": "history", "content": history_string}
-        self.send_to_client(history_dict)
 
     def broadcast(self, content_dict):
         for client in clients.values():
