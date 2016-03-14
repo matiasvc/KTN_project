@@ -20,9 +20,12 @@ class MessageReceiver(Thread):
         super(MessageReceiver, self).__init__()
         # Flag to run thread as a deamon
         self.daemon = True
+        self.should_stop = False
 
     def run(self):
         while True:
+            if self.should_stop:
+                return
             json_response = self.connection.recv(1024)
             if json_response:
                 self.client.receive_message(json_response)
