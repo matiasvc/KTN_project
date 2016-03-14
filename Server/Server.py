@@ -2,7 +2,7 @@
 
 import socketserver
 import json
-from time import time
+from time import time, sleep
 """
 Variables and functions that must be used by all the ClientHandler objects
 must be written here (e.g. a dictionary for connected clients)
@@ -34,20 +34,26 @@ class ClientHandler(socketserver.BaseRequestHandler):
             'msg': self.handle_message,
             'logout': self.handle_logout,
             'help' : self.handle_help,
-            'history' : self.handle_history
+            'history' : self.handle_history,
+            'names' : self.handle_names
         }
 
         # Loop that listens for messages from the client
         while True:
-            data = self.connection.recv(4096)
-            if data:
-                received_dict = json.loads(data.decode('utf-8'))
-                messageType = received_dict['request']
-                print("Server received: " + str(received_dict))
-                try:
-                    self.handlers[messageType](received_dict)
-                except KeyError:
-                    self.handle_unknow_command(received_dict)
+            try:
+                data = self.connection.recv(4096)
+                if data:
+                    received_dict = json.loads(data.decode('utf-8'))
+                    messageType = received_dict['request']
+                    print("Server received: " + str(received_dict))
+                    try:
+                        self.handlers[messageType](received_dict)
+                    except KeyError:
+                        self.handle_unknow_command(received_dict)
+            except ConnectionResetError:
+                if self.username:
+                    print("Connection reset: " + self.username)
+                    del clients[self.username]
 
     def handle_login(self, received_dict):
         username = received_dict["content"]
@@ -80,10 +86,21 @@ class ClientHandler(socketserver.BaseRequestHandler):
             client.send_to_client(message_dict)
 
     def handle_history(self, received_dict):
-        self.send_to_client()
+        self.send_history_to_client()
 
     def handle_help(self, received_dict):
-        response_dict = {"timestamp": time(), "sender": "Server", "response": "info", "content": "login\nmsg\nlogout\nhelp\nhistory"}
+        help_string = "Commands:\n" \
+                      "login [username] - Log in to server\n" \
+                      "msg [message - Send message]\n" \
+                      "logout - Log out from server\n" \
+                      "help - Print this page\n" \
+                      "history - Print a history of all messages"
+        response_dict = {"timestamp": time(), "sender": "Server", "response": "info", "content": help_string}
+        self.send_to_client(response_dict)
+
+    def handle_names(self, received_dict):
+        name_list = list(clients.keys())
+        response_dict = {"timestamp": time(), "sender": "Server", "response": "names", "content": name_list}
         self.send_to_client(response_dict)
 
     def handle_unknow_command(self, received_dict):
